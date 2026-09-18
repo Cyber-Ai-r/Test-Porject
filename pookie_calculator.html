@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pookie Calculator 💗</title>
+<style>
+  :root{
+    --pink-bg-1: #ffd6e8;
+    --pink-bg-2: #ffb8d9;
+    --pink-deep: #ff5fa2;
+    --pink-mid: #ff8fc0;
+    --pink-soft: #fff0f6;
+    --pink-line: #ffc2dd;
+    --ink: #7a2854;
+    --white: #ffffff;
+    --gold: #ffd76a;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0; padding:0; height:100%;
+    background: var(--pink-bg-1);
+  }
+
+  body{
+    min-height:100vh;
+    font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    position:relative;
+    background:
+      radial-gradient(circle at 15% 20%, var(--pink-bg-2), transparent 55%),
+      radial-gradient(circle at 85% 80%, #ffc6de, transparent 55%),
+      linear-gradient(160deg, var(--pink-bg-1), #ffe3f0 60%, var(--pink-bg-1));
+  }
+
+  /* floating emoji background */
+  .emoji-field{
+    position:fixed; inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:0;
+  }
+  .emoji-field span{
+    position:absolute;
+    font-size: 28px;
+    opacity:0.55;
+    animation: floaty linear infinite;
+    filter: drop-shadow(0 2px 3px rgba(255,95,162,0.25));
+  }
+  @keyframes floaty{
+    0%   { transform: translateY(110vh) rotate(0deg); }
+    100% { transform: translateY(-15vh) rotate(360deg); }
+  }
+
+  .app{
+    position:relative;
+    z-index:2;
+    width: 340px;
+    max-width: 92vw;
+  }
+
+  .title{
+    text-align:center;
+    color: var(--ink);
+    font-weight:700;
+    font-size: 22px;
+    margin-bottom: 14px;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .title .heart{ color: var(--pink-deep); }
+
+  .calc{
+    background: var(--white);
+    border-radius: 28px;
+    padding: 20px;
+    box-shadow:
+      0 20px 40px rgba(255, 95, 162, 0.25),
+      0 2px 0 var(--pink-line) inset;
+    border: 3px solid var(--pink-line);
+    position:relative;
+  }
+
+  .bow{
+    position:absolute;
+    top:-22px; left:50%;
+    transform: translateX(-50%);
+    font-size: 30px;
+    filter: drop-shadow(0 3px 3px rgba(255,95,162,0.3));
+  }
+
+  .display{
+    background: linear-gradient(180deg, var(--pink-soft), #ffe7f2);
+    border-radius: 18px;
+    padding: 22px 16px 14px;
+    margin-bottom: 16px;
+    text-align:right;
+    border: 2px solid var(--pink-line);
+    min-height: 78px;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    overflow:hidden;
+  }
+  .display .prev{
+    font-size: 14px;
+    color: #c56b96;
+    min-height: 16px;
+    word-break: break-all;
+  }
+  .display .curr{
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--ink);
+    word-break: break-all;
+    line-height:1.1;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  button.key{
+    border:none;
+    border-radius: 16px;
+    padding: 16px 0;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--pink-soft);
+    color: var(--ink);
+    box-shadow: 0 3px 0 var(--pink-line);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button.key:active{
+    transform: translateY(3px);
+    box-shadow: 0 0 0 var(--pink-line);
+  }
+
+  .key.op{
+    background: var(--pink-mid);
+    color: white;
+    box-shadow: 0 3px 0 #e56aa2;
+  }
+  .key.op:active{ box-shadow: 0 0 0 #e56aa2; }
+
+  .key.eq{
+    background: linear-gradient(180deg, var(--pink-deep), #ff3f8e);
+    color: white;
+    box-shadow: 0 3px 0 #cc2f70;
+    grid-column: span 2;
+  }
+  .key.eq:active{ box-shadow: 0 0 0 #cc2f70; }
+
+  .key.clear{
+    background: #ffe3ee;
+    color: #c23b73;
+    box-shadow: 0 3px 0 #f3a9c8;
+  }
+
+  .key.zero{ grid-column: span 2; }
+
+  .footer-note{
+    text-align:center;
+    margin-top: 14px;
+    font-size: 12px;
+    color: #b1558a;
+    opacity: 0.8;
+  }
+
+  /* ---------- OVERLAY ---------- */
+  .overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(255, 182, 213, 0.55);
+    backdrop-filter: blur(6px);
+    opacity:0;
+    pointer-events:none;
+    transition: opacity 0.4s ease;
+    padding: 20px;
+  }
+  .overlay.show{
+    opacity:1;
+    pointer-events:all;
+  }
+
+  .love-text{
+    font-size: clamp(22px, 6vw, 34px);
+    font-weight: 800;
+    color: #ff2e7e;
+    text-align:center;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.7), 0 8px 20px rgba(255,46,126,0.4);
+    animation: pulse 0.9s ease-in-out infinite;
+    max-width: 90%;
+    line-height:1.3;
+  }
+  @keyframes pulse{
+    0%,100%{ transform: scale(1); }
+    50%{ transform: scale(1.06); }
+  }
+
+  .fireworks{
+    position:absolute; inset:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .spark{
+    position:absolute;
+    width:8px; height:8px;
+    border-radius:50%;
+    top:50%; left:50%;
+    opacity:0;
+  }
+
+  .ask-box{
+    background: white;
+    border-radius: 24px;
+    padding: 34px 26px;
+    text-align:center;
+    max-width: 320px;
+    border: 3px solid var(--pink-line);
+    box-shadow: 0 20px 50px rgba(255,95,162,0.35);
+  }
+  .ask-box p{
+    color: var(--ink);
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 22px;
+    line-height:1.4;
+  }
+  .ask-btns{
+    display:flex;
+    gap: 14px;
+    justify-content:center;
+  }
+  .ask-btns button{
+    border:none;
+    border-radius: 14px;
+    padding: 12px 26px;
+    font-size: 16px;
+    font-weight:700;
+    cursor:pointer;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .btn-yes{
+    background: linear-gradient(180deg, var(--pink-deep), #ff3f8e);
+    color:white;
+    box-shadow: 0 4px 0 #cc2f70;
+  }
+  .btn-no{
+    background: #ffe3ee;
+    color: #c23b73;
+    box-shadow: 0 4px 0 #f3a9c8;
+  }
+  .btn-no.vanish{
+    opacity:0;
+    transform: scale(0.4) rotate(20deg);
+    pointer-events:none;
+    width:0; padding:0; margin:0; box-shadow:none;
+  }
+
+  /* mirror */
+  .mirror-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 16px;
+  }
+  .mirror-frame{
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    border: 10px solid var(--pink-deep);
+    outline: 4px solid var(--gold);
+    outline-offset: 6px;
+    overflow:hidden;
+    position:relative;
+    background: #ffe0ee;
+    box-shadow: 0 20px 50px rgba(255,46,126,0.45);
+  }
+  .mirror-frame video{
+    width:100%; height:100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+  }
+  .mirror-caption{
+    color: #ff2e7e;
+    font-weight: 800;
+    font-size: 17px;
+    text-align:center;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+  }
+  .mirror-error{
+    color: #ff2e7e;
+    font-weight:600;
+    font-size: 14px;
+    text-align:center;
+    max-width: 260px;
+  }
+  .close-mirror{
+    margin-top: 4px;
+    border:none;
+    border-radius: 12px;
+    padding: 8px 20px;
+    background: white;
+    color: var(--pink-deep);
+    font-weight:700;
+    border: 2px solid var(--pink-deep);
+    cursor:pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .emoji-field span, .love-text{ animation: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="emoji-field" id="emojiField"></div>
+
+  <div class="app">
+    <div class="title">Pookie's Calculator <span class="heart">💗</span></div>
+    <div class="calc">
+      <div class="bow">🎀</div>
+      <div class="display">
+        <div class="prev" id="prevDisplay">&nbsp;</div>
+        <div class="curr" id="currDisplay">0</div>
+      </div>
+      <div class="grid">
+        <button class="key clear" onclick="clearAll()">C</button>
+        <button class="key clear" onclick="backspace()">⌫</button>
+        <button class="key op" onclick="chooseOp('%')">%</button>
+        <button class="key op" onclick="chooseOp('÷')">÷</button>
+
+        <button class="key" onclick="appendNum('7')">7</button>
+        <button class="key" onclick="appendNum('8')">8</button>
+        <button class="key" onclick="appendNum('9')">9</button>
+        <button class="key op" onclick="chooseOp('×')">×</button>
+
+        <button class="key" onclick="appendNum('4')">4</button>
+        <button class="key" onclick="appendNum('5')">5</button>
+        <button class="key" onclick="appendNum('6')">6</button>
+        <button class="key op" onclick="chooseOp('-')">−</button>
+
+        <button class="key" onclick="appendNum('1')">1</button>
+        <button class="key" onclick="appendNum('2')">2</button>
+        <button class="key" onclick="appendNum('3')">3</button>
+        <button class="key op" onclick="chooseOp('+')">+</button>
+
+        <button class="key zero" onclick="appendNum('0')">0</button>
+        <button class="key" onclick="appendNum('.')">.</button>
+        <button class="key eq" onclick="calculate()">=</button>
+      </div>
+    </div>
+    <div class="footer-note">made with 💕 just for you</div>
+  </div>
+
+  <!-- Love animation overlay -->
+  <div class="overlay" id="loveOverlay">
+    <div class="fireworks" id="fireworks"></div>
+    <div class="love-text">I Love You my<br>Pookie Boujaaaannnnn 💖</div>
+  </div>
+
+  <!-- Ask overlay -->
+  <div class="overlay" id="askOverlay">
+    <div class="ask-box">
+      <p>rifat er bouu k dekhte chao? 👀💗</p>
+      <div class="ask-btns">
+        <button class="btn-yes" onclick="onYes()">Yes</button>
+        <button class="btn-no" id="noBtn" onclick="onNo()">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mirror overlay -->
+  <div class="overlay" id="mirrorOverlay">
+    <div class="mirror-wrap">
+      <div class="mirror-frame" id="mirrorFrame">
+        <video id="mirrorVideo" autoplay playsinline muted></video>
+      </div>
+      <div class="mirror-caption" id="mirrorCaption">she's beautiful, isn't she? 🥰</div>
+      <div class="mirror-error" id="mirrorError" style="display:none;"></div>
+      <button class="close-mirror" onclick="closeMirror()">close</button>
+    </div>
+  </div>
+
+<script>
+  // ---------- floating emoji background ----------
+  const emojis = ['🌸','💕','🎀','✨','🩷','💗','🧸','💌'];
+  const field = document.getElementById('emojiField');
+  const emojiCount = window.innerWidth < 500 ? 12 : 20;
+  for(let i=0;i<emojiCount;i++){
+    const s = document.createElement('span');
+    s.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    s.style.left = Math.random()*100 + 'vw';
+    s.style.fontSize = (18 + Math.random()*22) + 'px';
+    const duration = 10 + Math.random()*14;
+    s.style.animationDuration = duration + 's';
+    s.style.animationDelay = (-Math.random()*duration) + 's';
+    field.appendChild(s);
+  }
+
+  // ---------- calculator logic ----------
+  let curr = '0';
+  let prev = '';
+  let op = null;
+  let resetNext = false;
+
+  const currDisplay = document.getElementById('currDisplay');
+  const prevDisplay = document.getElementById('prevDisplay');
+
+  function updateDisplay(){
+    currDisplay.textContent = curr;
+    prevDisplay.textContent = prev ? `${prev} ${op || ''}` : '\u00A0';
+  }
+
+  function appendNum(n){
+    if(resetNext){ curr = '0'; resetNext = false; }
+    if(n === '.' && curr.includes('.')) return;
+    if(curr === '0' && n !== '.'){ curr = n; }
+    else { curr += n; }
+    updateDisplay();
+  }
+
+  function chooseOp(o){
+    if(op && !resetNext) calculate();
+    prev = curr;
+    op = o;
+    resetNext = true;
+    updateDisplay();
+  }
+
+  function backspace(){
+    if(resetNext) return;
+    curr = curr.length > 1 ? curr.slice(0,-1) : '0';
+    updateDisplay();
+  }
+
+  function clearAll(){
+    curr = '0'; prev=''; op=null; resetNext=false;
+    updateDisplay();
+  }
+
+  function calculate(){
+    if(!op || prev === '') return;
+    const a = parseFloat(prev);
+    const b = parseFloat(curr);
+    let result;
+    switch(op){
+      case '+': result = a + b; break;
+      case '-': result = a - b; break;
+      case '×': result = a * b; break;
+      case '÷': result = b === 0 ? NaN : a / b; break;
+      case '%': result = a % b; break;
+      default: return;
+    }
+    if(Number.isNaN(result)){
+      curr = 'Error';
+    } else {
+      curr = String(Math.round(result * 100000) / 100000);
+    }
+    const triggeredValue = result;
+    prev = '';
+    op = null;
+    resetNext = true;
+    updateDisplay();
+
+    if(triggeredValue === 100){
+      setTimeout(triggerLoveSequence, 250);
+    }
+  }
+
+  // ---------- special sequence ----------
+  const loveOverlay = document.getElementById('loveOverlay');
+  const askOverlay = document.getElementById('askOverlay');
+  const mirrorOverlay = document.getElementById('mirrorOverlay');
+  const fireworksEl = document.getElementById('fireworks');
+
+  function spawnFireworks(){
+    fireworksEl.innerHTML = '';
+    const colors = ['#ff2e7e','#ff8fc0','#ffd76a','#ff5fa2','#ffffff'];
+    for(let burst=0; burst<5; burst++){
+      const cx = 20 + Math.random()*60;
+      const cy = 20 + Math.random()*50;
+      for(let i=0;i<18;i++){
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        const color = colors[Math.floor(Math.random()*colors.length)];
+        spark.style.background = color;
+        spark.style.left = cx + '%';
+        spark.style.top = cy + '%';
+        const angle = (Math.PI*2*i)/18;
+        const dist = 60 + Math.random()*60;
+        const dx = Math.cos(angle)*dist;
+        const dy = Math.sin(angle)*dist;
+        spark.animate([
+          { transform:'translate(0,0) scale(1)', opacity:1 },
+          { transform:`translate(${dx}px, ${dy}px) scale(0.3)`, opacity:0 }
+        ], {
+          duration: 900 + Math.random()*500,
+          delay: burst*220,
+          easing:'cubic-bezier(.2,.8,.2,1)',
+          fill:'forwards'
+        });
+        fireworksEl.appendChild(spark);
+      }
+    }
+  }
+
+  function triggerLoveSequence(){
+    loveOverlay.classList.add('show');
+    spawnFireworks();
+    const fwInterval = setInterval(spawnFireworks, 1100);
+
+    setTimeout(()=>{
+      clearInterval(fwInterval);
+      loveOverlay.classList.remove('show');
+      resetAsk();
+      askOverlay.classList.add('show');
+    }, 3400);
+  }
+
+  function resetAsk(){
+    const noBtn = document.getElementById('noBtn');
+    noBtn.classList.remove('vanish');
+  }
+
+  function onNo(){
+    const noBtn = document.getElementById('noBtn');
+    noBtn.classList.add('vanish');
+  }
+
+  function onYes(){
+    askOverlay.classList.remove('show');
+    openMirror();
+  }
+
+  // ---------- camera mirror ----------
+  let mirrorStream = null;
+  const mirrorVideo = document.getElementById('mirrorVideo');
+  const mirrorError = document.getElementById('mirrorError');
+  const mirrorCaption = document.getElementById('mirrorCaption');
+
+  async function openMirror(){
+    mirrorError.style.display = 'none';
+    mirrorCaption.style.display = 'block';
+    mirrorOverlay.classList.add('show');
+    try{
+      mirrorStream = await navigator.mediaDevices.getUserMedia({ video: true, audio:false });
+      mirrorVideo.srcObject = mirrorStream;
+    }catch(err){
+      mirrorCaption.style.display = 'none';
+      mirrorError.style.display = 'block';
+      mirrorError.textContent = "couldn't open the camera 🥺 — allow camera access and try again.";
+    }
+  }
+
+  function closeMirror(){
+    mirrorOverlay.classList.remove('show');
+    if(mirrorStream){
+      mirrorStream.getTracks().forEach(t=>t.stop());
+      mirrorStream = null;
+    }
+  }
+
+  updateDisplay();
+</script>
+</body>
+</html>
